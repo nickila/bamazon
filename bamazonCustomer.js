@@ -1,6 +1,8 @@
 // - Then create a Node application called bamazonCustomer.js. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
 var mysql = require("mysql");
-var inquirer = require("inquirer")
+var inquirer = require("inquirer");
+
+
 var connection = mysql.createConnection({
     host: "localhost",
 
@@ -13,93 +15,88 @@ var connection = mysql.createConnection({
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
+    displayProducts();
 
 
 
 
+})
 
-});
 
-// -- The app should then prompt users with two messages.
+function displayProducts() {
+    connection.query("SELECT * FROM products", function (err, res) {
 
-// -- The first should ask them the ID of the product they would like to buy.
-// -- The second message should ask how many units of the product they would like to buy.
-
-inquirer.prompt([
-    {
-        name: "item_ID",
-        type: "input",
-        message: "Please enter the item ID."
-    },
-    {
-        name: "units",
-        type: "input",
-        message: "Please enter the number of units."
-    }
-])
-    .then(function (inquirerResponse) {
-        //console.log(inquirerResponse);
-        var choice = inquirerResponse.choice;
-        console.log(choice);
-
-        if (choice === "SONGS BY ARTIST") {
-            byArtist();
+        if (err) throw err;
+        items = res.length;
+        console.log("=====================================================================");
+        console.log("ID  PRODUCT     DEPARTMENT     PRICE     ON HAND")
+        for (var i = 0; i < res.length; i++) {
+            console.log(res[i].item_id + " | " + res[i].product_name + " | " + res[i].department_name + " | $" + res[i].price + " | " + res[i].stock_quantity);
 
         }
-    });
-function byArtist() {
+        console.log("=====================================================================");
+        chooseProduct();
+    })
+}
+var item_id;
+var units;
+var total = 0;
+function chooseProduct() {
+
+    // -- The app should then prompt users with two messages.
+
+    // -- The first should ask them the ID of the product they would like to buy.
+    // -- The second message should ask how many units of the product they would like to buy.
+
     inquirer.prompt([
         {
-            name: "artist",
+            name: "item_id",
             type: "input",
-            message: "NAME OF ARTIST"
+            message: "Please enter the item ID."
+        },
+        {
+            name: "units",
+            type: "input",
+            message: "Please enter the number of units."
         }
+    ])
+        .then(function (inquirerResponse) {
+                
+                //console.log(inquirerResponse);
+                item_id = parseInt(inquirerResponse.item_id);
+                units = parseInt(inquirerResponse.units);
+                console.log("ITEM ID: #" + item_id);
+                console.log("QUANTITY: " + units);
+                connection.query("SELECT * FROM products", function (err, res) {
+                    if (err) throw err;
+                for (j = 0; j < res.length; j++) {
+                    if (item_id == res[j].item_id && units <= res[j].stock_quantity) {
+                        total = total + res[j].price;
+                        console.log(total);
+                        inquirer.prompt([
+                            {
+                                name: "choice",
+                                type: "list",
+                                choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
+                            }
+                        ])
+                        .then(function (inquirerResponse) {
+                            if (inquirerResponse == "ADD ANOTHER ITEM") {
+                            chooseProduct();
+                            } else {
+                                console.log("Your total is $" + total);
+                            }
+                        })
+                    } else if (item_id == res[j].item_id && units > res[j].stock_quantity) {
+                        console.log("Insufficient quantity!");
+                        chooseProduct();
+                    }
+                }
 
+            });
 
-
-    ]).then(function (promptResponse) {
-
-        connection.query('SELECT * FROM `songs` WHERE `artist` = ?', [promptResponse.artist], function (error, res) {
-            // error will be an Error if one occurred during the query
-            // results will contain the results of the query
-            // fields will contain information about the returned results fields (if any)
-
-            console.log(error);
-            // error will be an Error if one occurred during the query
-            for (i = 0; i < res.length; i++) {
-                console.log(res[i].title);
-            }
-            connection.end();
-            // results will contain the results of the query
-            // fields will contain information about the returned results fields (if any)
         });
-
-    }).then(function (answer) {
-
-        connection.query()
-
-    });
-
-}
-
-
-
-
-
-// function multiSearch() {
-//     var query = "SELECT artits FROM songs GROUP BY artist HAVING count(*) > 1"
-//     connection.query(query, function (err, res) {
-//         for (var i = 0; i < res.length; i++) {
-//             console.log(res[i].artist);
-//         }
-
-        
-//     });
-// }
-
-
-
-
+    }
 
 
 // -- Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
