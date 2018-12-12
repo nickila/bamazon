@@ -32,6 +32,8 @@ VALUES
     
     SELECT * FROM products;
     
+    UPDATE products SET stock_quantity = (399) WHERE item_id = 1;
+    
 
 
 -- Then create a Node application called bamazonCustomer.js. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.

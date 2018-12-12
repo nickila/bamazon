@@ -41,6 +41,7 @@ function displayProducts() {
 var item_id;
 var units;
 var total = 0;
+var price;
 function chooseProduct() {
 
     // -- The app should then prompt users with two messages.
@@ -61,42 +62,68 @@ function chooseProduct() {
         }
     ])
         .then(function (inquirerResponse) {
-                
-                //console.log(inquirerResponse);
-                item_id = parseInt(inquirerResponse.item_id);
-                units = parseInt(inquirerResponse.units);
-                console.log("ITEM ID: #" + item_id);
-                console.log("QUANTITY: " + units);
-                connection.query("SELECT * FROM products", function (err, res) {
-                    if (err) throw err;
-                for (j = 0; j < res.length; j++) {
+
+            item_id = parseInt(inquirerResponse.item_id);
+            units = parseInt(inquirerResponse.units);
+
+            console.log("ITEM ID: " + item_id);
+            console.log("QUANTITY: " + units);
+            connection.query("SELECT * FROM products", function (err, res) {
+                if (err) throw err;
+
+                for (var j = 0; j < res.length; j++) {
+
                     if (item_id == res[j].item_id && units <= res[j].stock_quantity) {
-                        total = total + res[j].price;
-                        console.log(total);
-                        inquirer.prompt([
-                            {
-                                name: "choice",
-                                type: "list",
-                                choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
-                            }
-                        ])
-                        .then(function (inquirerResponse) {
-                            if (inquirerResponse == "ADD ANOTHER ITEM") {
-                            chooseProduct();
-                            } else {
-                                console.log("Your total is $" + total);
-                            }
-                        })
-                    } else if (item_id == res[j].item_id && units > res[j].stock_quantity) {
+                        price = parseFloat(res[j].price);
+                        subtotal = price * units;
+                        total = total + subtotal;
+                        newQuantity = parseInt(res[j].stock_quantity) - units;
+                        console.log("SUBTOTAL: $" + (total).toFixed(2));
+                        console.log(newQuantity);
+                        // Adjust quantities from schema using mysql npm
+                        connection.beginTransaction(function (err) {
+                            if (err) { throw err; }
+                            connection.query("UPDATE products SET stock_quantity =(" + newQuantity + ") WHERE item_id = " + item_id + ";", function (error, results, fields) {
+                                if (error) {
+                                    //return connection.rollback(function() {
+                                    throw error;
+                                    //});
+                                }
+
+                            });
+                            
+                            inquirer.prompt([
+                                {
+                                    name: "choice",
+                                    type: "list",
+                                    choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
+                                }
+                            ])
+                                .then(function (inquirerResponse) {
+
+                                    if (inquirerResponse.choice == "ADD ANOTHER ITEM") {
+                                        displayProducts();
+                                        //chooseProduct();
+                                    } else {
+                                        console.log("Your total is $" + (total).toFixed(2));
+                                        connection.end();
+                                    }
+                                })
+                        });
+                        
+                    
+
+
+                } else if (item_id == res[j].item_id && units > res[j].stock_quantity) {
                         console.log("Insufficient quantity!");
                         chooseProduct();
+
                     }
                 }
-
             });
-
         });
-    }
+        
+}
 
 
 // -- Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
