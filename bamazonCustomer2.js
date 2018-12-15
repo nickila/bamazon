@@ -32,6 +32,7 @@ function displayProducts() {
         console.log("=====================================================================");
         var tableArr = [];
         var price;
+        var sales;
         for (var i = 0; i < res.length; i++) {
             sales = parseFloat(res[i].product_sales).toFixed(2);
             price = parseFloat(res[i].price).toFixed(2);
@@ -42,6 +43,7 @@ function displayProducts() {
                     DEPARTMENT: res[i].department_name,
                     PRICE: price,
                     ONHAND: res[i].stock_quantity,
+                    SALES: sales
                 }
             )
         }
@@ -80,80 +82,64 @@ function chooseProduct() {
 
             console.log("ITEM ID: " + item_id);
             console.log("QUANTITY: " + units);
-
             connection.query("SELECT * FROM products", function (err, res) {
+
                 if (err) throw err;
 
                 for (var j = 0; j < res.length; j++) {
+                    //var dept = res[j].department_name;
 
                     if (item_id == res[j].item_id && units <= res[j].stock_quantity) {
                         price = parseFloat(res[j].price);
                         subtotal = price * units;
-                        //sales = parseFloat(res[j].product_sales)
+                        sales = parseFloat(res[j].product_sales)
                         total = total + subtotal;
-                        var productDept = res[j].department_name;
                         newQuantity = parseInt(res[j].stock_quantity) - units;
                         console.log("SUBTOTAL: $" + (total).toFixed(2));
-                        //console.log(newQuantity);
+                        console.log(newQuantity);
+
+                        // Adjust quantities from schema using mysql npm
+                        // connection.beginTransaction(function (err) {
+                        //     if (err) { throw err; }
+                        //     connection.query("UPDATE departments SET product_sales =(" + (sales + subtotal) + ") WHERE department_name = " + dept + ";", function (error, results, fields) {
+                        //         if (error) {
+                        //             //return connection.rollback(function() {
+                        //             throw error;
+                        //             //});
+                        //         }
+                        //     });
+                        // });
+
                         connection.beginTransaction(function (err) {
                             if (err) { throw err; }
-                            connection.query("SELECT * FROM departments", function (err, res) {
-                                if (err) throw err;
-
-                                for (var k = 0; k < res.length; k++) {
-                                    var sales = res[k].product_sales;
-                                    var id = res[k].department_id;
-                                    if (productDept == res[k].department_name)
-
-                                        connection.query("UPDATE departments SET product_sales =(" + (sales + subtotal).toFixed(2) + ") WHERE department_id = " + id + ";", function (error, results, fields) {
-                                            if (error) {
-                                                throw error;
-                                            }
-                                            connection.commit(function (err) {
-                                                if (err) {
-                                                    return connection.rollback(function () {
-                                                        throw err;
-                                                    });
-                                                }
-                                            });
-                                        });
+                            connection.query("UPDATE products SET stock_quantity =(" + newQuantity + ") WHERE item_id = " + item_id + ";", function (error, results, fields) {
+                                if (error) {
+                                    //return connection.rollback(function() {
+                                    throw error;
+                                    //});
                                 }
                             });
-                            connection.beginTransaction(function (err) {
-                                if (err) { throw err; }
-                                console.log('updating products!!');
-                                console.log(total);
-                                console.log(newQuantity);
-                                connection.query("UPDATE products SET stock_quantity =(" + newQuantity + ") WHERE item_id = " + item_id + ";", function (error, results, fields) {
-                                    if (error) {
-                                        throw error;           
-                                    }
-                                    connection.commit(function (err) {
-                                        if (err) {
-                                            return connection.rollback(function () {
-                                                throw err;
-                                            });
-                                        }
-                                    });
-                                });
-                                inquirer.prompt([
-                                    {
-                                        name: "choice",
-                                        type: "list",
-                                        choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
-                                    }
-                                ])
-                                    .then(function (inquirerResponse) {
+                            inquirer.prompt([
+                                {
+                                    name: "choice",
+                                    type: "list",
+                                    choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
+                                }
+                            ])
+                                .then(function (inquirerResponse) {
 
-                                        if (inquirerResponse.choice == "ADD ANOTHER ITEM") {
-                                            displayProducts();
-                                        } else {
-                                            console.log("Your total is $" + (total).toFixed(2));
-                                            connection.end();
-                                        }
-                                    })
-                            });
+                                    if (inquirerResponse.choice == "ADD ANOTHER ITEM") {
+                                        displayProducts();
+                                        //chooseProduct();
+                                    } else {
+                                        console.log("Your total is $" + (total).toFixed(2));
+                                        connection.end();
+                                    }
+                                })
                         });
+
+
+
 
                     } else if (item_id == res[j].item_id && units > res[j].stock_quantity) {
                         console.log("Insufficient quantity!");
@@ -162,9 +148,27 @@ function chooseProduct() {
                     }
                 }
             });
-        });
+            connection.query("SELECT * FROM departments", function (err, res) {
+                if (err) { throw err; }
+                connection.beginTransaction(function (err) {
+                    if (err) { throw err; }
+                    var id = res[0].department_id;
+                    var sales = 5;
+                    var subtotal = 5;
+                    var dept = "tools";
+                    connection.query("UPDATE departments SET product_sales =(" + (sales + subtotal) + ") WHERE department_id = " + id + ";", function (error, results, fields) {
+                        if (error) {
+                            //return connection.rollback(function() {
+                            throw error;
+                            //});
+                        }
 
-}
+                    });
+
+                });
+            });
+        })
+    }
 
 
 // -- Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.

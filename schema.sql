@@ -34,7 +34,29 @@ VALUES
     
     UPDATE products SET stock_quantity = (399) WHERE item_id = 1;
     
+    CREATE TABLE departments (
+department_id INTEGER AUTO_INCREMENT PRIMARY KEY,
 
+department_name VARCHAR(50) NOT NULL,
+
+over_head_costs DECIMAL(10, 2) NOT NULL
+);
+
+INSERT INTO departments 
+(department_name, over_head_costs)
+VALUES 
+	("tools", 400),
+    ("home goods", 100),
+    ("hardware", 250),
+    ("clothing", 300);
+    
+    SELECT * FROM departments;
+    
+    UPDATE departments SET over_head_costs = (1500) WHERE department_id = 1;
+    UPDATE departments SET over_head_costs = (2000) WHERE department_id = 2;
+    UPDATE departments SET over_head_costs = (1000) WHERE department_id = 3;
+    UPDATE departments SET over_head_costs = (1250) WHERE department_id = 4;
+-- over_head_costs (A dummy number you set for each department)
 
 -- Then create a Node application called bamazonCustomer.js. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
 
