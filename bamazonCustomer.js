@@ -32,6 +32,7 @@ function displayProducts() {
         console.log("=====================================================================");
         var tableArr = [];
         var price;
+        
         for (var i = 0; i < res.length; i++) {
             sales = parseFloat(res[i].product_sales).toFixed(2);
             price = parseFloat(res[i].price).toFixed(2);
@@ -41,7 +42,8 @@ function displayProducts() {
                     PRODUCT: res[i].product_name,
                     DEPARTMENT: res[i].department_name,
                     PRICE: price,
-                    ONHAND: res[i].stock_quantity,
+                    ONHAND: res[i].stock_quantity
+                    // SALES: res[i].product_sales
                 }
             )
         }
@@ -89,7 +91,7 @@ function chooseProduct() {
                     if (item_id == res[j].item_id && units <= res[j].stock_quantity) {
                         price = parseFloat(res[j].price);
                         subtotal = price * units;
-                        //sales = parseFloat(res[j].product_sales)
+                        sales = parseFloat(res[j].product_sales)
                         total = total + subtotal;
                         var productDept = res[j].department_name;
                         newQuantity = parseInt(res[j].stock_quantity) - units;
@@ -121,12 +123,10 @@ function chooseProduct() {
                             });
                             connection.beginTransaction(function (err) {
                                 if (err) { throw err; }
-                                console.log('updating products!!');
-                                console.log(total);
-                                console.log(newQuantity);
+
                                 connection.query("UPDATE products SET stock_quantity =(" + newQuantity + ") WHERE item_id = " + item_id + ";", function (error, results, fields) {
                                     if (error) {
-                                        throw error;           
+                                        throw error;
                                     }
                                     connection.commit(function (err) {
                                         if (err) {
@@ -136,35 +136,55 @@ function chooseProduct() {
                                         }
                                     });
                                 });
-                                inquirer.prompt([
-                                    {
-                                        name: "choice",
-                                        type: "list",
-                                        choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
-                                    }
-                                ])
-                                    .then(function (inquirerResponse) {
+                                connection.beginTransaction(function (err) {
+                                    if (err) { throw err; }
 
-                                        if (inquirerResponse.choice == "ADD ANOTHER ITEM") {
-                                            displayProducts();
-                                        } else {
-                                            console.log("Your total is $" + (total).toFixed(2));
-                                            connection.end();
+                                    connection.query("UPDATE products SET product_sales =(" + (sales + subtotal).toFixed(2) + ") WHERE item_id = " + item_id + ";", function (error, results, fields) {
+                                        if (error) {
+                                            throw error;
                                         }
-                                    })
+                                        connection.commit(function (err) {
+                                            if (err) {
+                                                return connection.rollback(function () {
+                                                    throw err;
+                                                });
+                                            }
+                                        });
+                                    });
+                                });
+                                    inquirer.prompt([
+                                        {
+                                            name: "choice",
+                                            type: "list",
+                                            choices: ["ADD ANOTHER ITEM", "PROCEED TO CHECKOUT"]
+                                        }
+                                    ])
+                                        .then(function (inquirerResponse) {
+
+                                            if (inquirerResponse.choice == "ADD ANOTHER ITEM") {
+                                                displayProducts();
+                                            } else {
+                                                console.log("Your total is $" + (total).toFixed(2));
+                                                connection.end();
+                                            }
+                                        })
+                                });
                             });
-                        });
 
-                    } else if (item_id == res[j].item_id && units > res[j].stock_quantity) {
-                        console.log("Insufficient quantity!");
-                        chooseProduct();
+                        } else if (item_id == res[j].item_id && units > res[j].stock_quantity) {
+                            console.log("Insufficient quantity!");
+                            chooseProduct();
+                        
 
+                        }
                     }
-                }
-            });
-        });
 
-}
+                })
+            });
+        };
+
+
+
 
 
 // -- Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
