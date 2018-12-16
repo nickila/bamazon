@@ -1,7 +1,4 @@
 var cTable = require('console.table');
-
-
-
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 
@@ -23,7 +20,6 @@ connection.connect(function (err) {
 // List a set of menu options:
 var item_id;
 var units;
-//var items;
 function promptChoice() {
     inquirer.prompt([
         {
@@ -52,8 +48,6 @@ function promptChoice() {
 
         });
 }
-
-
 // If a manager selects View Products for Sale, the app should list every available item: the item IDs, names, prices, and quantities.
 function displayForSale() {
     connection.query("SELECT * FROM products", function (err, res) {
@@ -109,9 +103,7 @@ function lowInventory() {
         console.log("=====================================================================");
         promptChoice();
     })
-
 }
-
 // If a manager selects Add to Inventory, your app should display a prompt that will let the manager "add more" of any item currently in the store.
 function addInventory() {
     inquirer.prompt([
@@ -136,10 +128,8 @@ function addInventory() {
                 connection.query("SELECT * FROM products", function (err, res) {
                     if (err) throw err;
                     for (var j = 0; j < res.length; j++) {
-
                         if (item_id == res[j].item_id) {
                             newQuantity = parseInt(res[j].stock_quantity) + units;
-                            //console.log("SUBTOTAL: $" + (total).toFixed(2));
                             console.log(newQuantity);
                             // Adjust quantities from schema using mysql npm
                             connection.beginTransaction(function (err) {
@@ -166,7 +156,6 @@ function addInventory() {
         });
 }
 // If a manager selects Add New Product, it should allow the manager to add a completely new product to the store.
-// function addNewProduct() {
 function addNewProduct() {
     inquirer.prompt([
         {
@@ -195,7 +184,6 @@ function addNewProduct() {
             var department = inquirerResponse.department;
             var price = parseFloat(inquirerResponse.price).toFixed(2);
             var stock = parseInt(inquirerResponse.stock);
-            //var sales = parseInt(inquirerResponse.product_sales)
             connection.beginTransaction(function (err) {
                 if (err) {
                     throw err;
@@ -213,9 +201,7 @@ function addNewProduct() {
                     });
                 });
                 promptChoice();
-
             });
         });
-
 }
 

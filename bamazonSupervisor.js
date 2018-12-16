@@ -1,7 +1,4 @@
 var cTable = require('console.table');
-
-
-
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 
@@ -41,7 +38,6 @@ function promptChoice() {
 
         });
 }
-
 // departments table should be taking the sales from the customer and adding them together.
 
 function salesByDept() {
@@ -89,9 +85,6 @@ function createDept() {
         .then(function (inquirerResponse) {
             var department = inquirerResponse.department;
             var overhead = inquirerResponse.overhead;
-            //var sales = parseFloat(inquirerResponse.sales).toFixed(2);
-            
-            //var sales = parseInt(inquirerResponse.product_sales)
             connection.beginTransaction(function (err) {
                 if (err) {
                     throw err;
@@ -109,8 +102,6 @@ function createDept() {
                     });
                 });
                 promptChoice();
-
             });
         });
-
 }
